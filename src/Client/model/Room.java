@@ -19,8 +19,14 @@ public class Room implements Serializable{
 
     public Room(String name) {
         this.name = name;
+        this.User = new ArrayList<>();
+        this.ChatHistory = new ArrayList<>();
     }   
 
+    public void addUser(String name){
+        this.User.add(name);
+    }
+    
     public ArrayList<String> getChatHistory() {
         return ChatHistory;
     }

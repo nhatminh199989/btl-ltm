@@ -70,14 +70,22 @@ public class Client {
         }
     }
 
-    public void getRoom() throws IOException, ClassNotFoundException {
+    public ArrayList<Room> getRoom() throws IOException, ClassNotFoundException {
         Message msg = new Message("GETROOM", "", "", "");
         serverOut.writeObject(msg);
         System.out.println("Getting room");
         Message res = (Message) serverIn.readObject();
         ArrayList<Room> roomList = (ArrayList<Room>) res.getContent();
-        for(Room i : roomList){
-            System.out.println(i.getName());
-        }
+        return roomList;
+    }
+    
+    public void joinRoom(String room,String username) throws IOException, ClassNotFoundException{
+        Message msg = new Message("JOIN","",username,room);
+        serverOut.writeObject(msg);
+        System.out.println("Joinning room");
+        Message res = (Message) serverIn.readObject();
+        Room r = (Room) res.getContent();
+        System.out.println(r.getName());
+        System.out.println(r.getUser());       
     }
 }

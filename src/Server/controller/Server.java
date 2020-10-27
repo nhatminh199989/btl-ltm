@@ -69,7 +69,25 @@ public class Server extends Thread{
                         getRoomList();
                         break;
                     }
+                    case "JOIN":{
+                        System.out.println("Client join room request");
+                        joinRoom(message);
+                        break;
+                    }
                 }
+            }
+        }
+    }
+    
+    public void joinRoom(Message message) throws IOException{
+        String RoomName = message.getTo();
+        String Username = message.getFrom();
+        ArrayList<Room> roomList = this.sd.getList();
+        for (Room i : roomList ){
+            if (i.getName().equalsIgnoreCase(RoomName)){
+                i.addUser(Username);
+                Message m = new Message("JOINROOM",i,"","");
+                outputStream.writeObject(m);
             }
         }
     }
