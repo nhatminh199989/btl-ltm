@@ -7,6 +7,7 @@ package Client.controller;
 
 import Client.model.Message;
 import Client.model.Room;
+import Client.model.RoomClientSide;
 import Client.view.Login;
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,7 +42,8 @@ public class Client {
         this.username = username;
     }
 
-    public Client(){}
+    public Client() {
+    }
 
     public boolean connect() {
         try {
@@ -70,22 +72,64 @@ public class Client {
         }
     }
 
-    public ArrayList<Room> getRoom() throws IOException, ClassNotFoundException {
+    public ArrayList<RoomClientSide> getRoom() throws IOException, ClassNotFoundException {
         Message msg = new Message("GETROOM", "", "", "");
         serverOut.writeObject(msg);
         System.out.println("Getting room");
         Message res = (Message) serverIn.readObject();
-        ArrayList<Room> roomList = (ArrayList<Room>) res.getContent();
+        ArrayList<RoomClientSide> roomList = (ArrayList<RoomClientSide>) res.getContent();
         return roomList;
     }
+
     
-    public void joinRoom(String room,String username) throws IOException, ClassNotFoundException{
-        Message msg = new Message("JOIN","",username,room);
+    public RoomClientSide joinRoom(String room, String username) throws IOException, ClassNotFoundException {
+        Message msg = new Message("JOIN", "", username, room);
         serverOut.writeObject(msg);
         System.out.println("Joinning room");
         Message res = (Message) serverIn.readObject();
-        Room r = (Room) res.getContent();
-        System.out.println(r.getName());
-        System.out.println(r.getUser());       
+        RoomClientSide r = (RoomClientSide) res.getContent();
+        return r;
     }
+    
+    public void sendMessToRoom(String mess,String from,String to) throws IOException{
+        Message msg = new Message("ROOMMESS",mess,from,to);
+        serverOut.writeObject(msg);
+        serverOut.flush();
+    }
+    
+    
+    
+    public String ReadMessLoop() throws IOException, ClassNotFoundException{
+        Message m;
+        while(true){
+            m = (Message) serverIn.readObject();
+            if( m != null){
+                String cmd = m.getHeader();
+                switch(cmd){
+                    case "ROOMMESS":{
+                        GetMess(m);
+                        break;
+                    }
+                    default:{
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    
+    public String GetMess(Message m){
+        String message = m.getFrom()+":"+ (String) m.getContent();
+        System.out.println(message+"from CLient.java");
+        return message;
+    }
+    
+    public String testGetMess() throws IOException, ClassNotFoundException{
+        Message m = (Message) serverIn.readObject();
+        String message  = m.getFrom()+":"+(String) m.getContent();
+        System.out.println("From client testGetMess");
+        return message;
+        
+    }
+        
 }

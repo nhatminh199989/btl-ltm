@@ -7,6 +7,7 @@ package Client.view;
 
 import Client.controller.Client;
 import Client.model.Room;
+import Client.model.RoomClientSide;
 import java.awt.Button;
 import java.awt.Color;
 import java.awt.Insets;
@@ -36,16 +37,17 @@ public class RoomPicker extends javax.swing.JDialog {
         super(parent, modal);
         initComponents();
         this.client = client;
-        ArrayList<Room> roomList = client.getRoom();
+        ArrayList<RoomClientSide> roomList = client.getRoom();
         Box box = Box.createVerticalBox();
-        for (Room i : roomList) {
+        for (RoomClientSide i : roomList) {
             Button b = new Button(i.getName());
             b.setSize(260, 40);
-            b.addActionListener(new  ActionListener() {
+            b.addActionListener(new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
                     try {
-                        client.joinRoom(i.getName(),client.getUsername());
+                        RoomClientSide r = client.joinRoom(i.getName(), client.getUsername());
+                        onJoinRoom(r);
                     } catch (IOException ex) {
                         Logger.getLogger(RoomPicker.class.getName()).log(Level.SEVERE, null, ex);
                     } catch (ClassNotFoundException ex) {
@@ -59,6 +61,12 @@ public class RoomPicker extends javax.swing.JDialog {
         box.setVisible(true);
         box.setSize(300, 150);
         this.jPanel1.add(box);
+    }
+
+    public void onJoinRoom(RoomClientSide r) throws IOException, ClassNotFoundException {
+        ChatScreen sc = new ChatScreen(r,client);
+        sc.setVisible(true);
+        this.setVisible(false);
     }
 
     private RoomPicker(JFrame jFrame, boolean b) {

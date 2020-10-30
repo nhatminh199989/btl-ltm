@@ -11,7 +11,7 @@ import java.io.Serializable;
  *
  * @author Watermelon
  */
-public class Message<T> implements Serializable{
+public class Message<T> implements Serializable{    
     private String header;
     private T content;
     private String from;
@@ -58,6 +58,11 @@ public class Message<T> implements Serializable{
 
     public void setTo(String to) {
         this.to = to;
+    }
+
+    @Override
+    public String toString() {
+        return "Message{" + "header=" + header + ", content=" + content + ", from=" + from + ", to=" + to + '}';
     }
     
     

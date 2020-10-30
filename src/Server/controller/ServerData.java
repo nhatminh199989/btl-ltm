@@ -27,6 +27,15 @@ public class ServerData {
     public ArrayList<Room> getList() {
         return list;
     }
+    
+    public Room getRoomByName(String name){
+        for(Room i : list){
+            if(i.getName().equals(name)){
+                return i;
+            }
+        }
+        return null;
+    }    
 
     public void setList(ArrayList<Room> list) {
         this.list = list;
