@@ -80,15 +80,22 @@ public class Room implements Serializable {
     }
 
     public void sendMessage(String from,String msg) throws IOException{
-        String message = from+":"+msg;
+        String message = from+": "+msg;
         this.ChatHistory.add(message);
         for(Server i : ServerList){
             if(!i.getAcc().getUsername().equals(from)){
-                Message m = new Message("ROOMMESS",msg,from,name);
+                Message m = new Message("ROOMMESS",message,from,name);
                 i.sendMessage(m);
-                System.out.println(i.getAcc().getUsername());
-                System.out.println(message);
             }
+        }
+    }
+    
+    public void ClientJoinRoom(String username) throws IOException{
+        for(Server i : ServerList){
+           if(!i.getAcc().getUsername().equals(username)){
+               Message m = new Message ("CLIENTJOINROOM",username,"","");
+               i.sendMessage(m);
+           }
         }
     }
 

@@ -95,33 +95,11 @@ public class Client {
         Message msg = new Message("ROOMMESS",mess,from,to);
         serverOut.writeObject(msg);
         serverOut.flush();
-    }
+    }   
     
-    
-    
-    public String ReadMessLoop() throws IOException, ClassNotFoundException{
-        Message m;
-        while(true){
-            m = (Message) serverIn.readObject();
-            if( m != null){
-                String cmd = m.getHeader();
-                switch(cmd){
-                    case "ROOMMESS":{
-                        GetMess(m);
-                        break;
-                    }
-                    default:{
-                        break;
-                    }
-                }
-            }
-        }
-    }
-    
-    public String GetMess(Message m){
-        String message = m.getFrom()+":"+ (String) m.getContent();
-        System.out.println(message+"from CLient.java");
-        return message;
+    public Message ReadMessLoop() throws IOException, ClassNotFoundException{
+        Message m = (Message) serverIn.readObject();
+        return m;
     }
     
     public String testGetMess() throws IOException, ClassNotFoundException{

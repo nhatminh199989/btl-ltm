@@ -97,6 +97,7 @@ public class Server extends Thread{
         System.out.println(chat);
         room.sendMessage(message.getFrom(),(String) message.getContent());
     }
+    
 
     public void joinRoom(Message message) throws IOException {
         String RoomName = message.getTo();
@@ -106,6 +107,7 @@ public class Server extends Thread{
             if (i.getName().equalsIgnoreCase(RoomName)) {
                 i.addUser(Username);
                 i.addServer(this);
+                i.ClientJoinRoom(Username);
                 Message m = new Message("JOINROOM", i.ClientsideRoom(), "", "");
                 System.out.println(m.toString());
                 outputStream.reset();
@@ -113,7 +115,6 @@ public class Server extends Thread{
                 outputStream.flush();
             }
         }
-        
     }
 
     public void getRoomList() throws IOException {
@@ -133,6 +134,7 @@ public class Server extends Thread{
     
     public void sendMessage(Message message) throws IOException{
         outputStream.writeObject(message);
+        outputStream.flush();
     }
     
     public void login(Message message) throws IOException {

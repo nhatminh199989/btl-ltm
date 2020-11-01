@@ -6,6 +6,7 @@
 package Client.view;
 
 import Client.controller.Client;
+import Client.model.Message;
 import Client.model.Room;
 import Client.model.RoomClientSide;
 import com.sun.xml.internal.ws.api.streaming.XMLStreamReaderFactory;
@@ -39,11 +40,13 @@ public class ChatScreen extends javax.swing.JFrame {
         this.room = room;
         this.client = client;
         this.jLabel1.setText(room.getName().toUpperCase());
+
         //Setup user list
         jList2.setModel(dlm);
         for (String i : room.getUser()) {
             dlm.addElement(i);
         }
+        this.jLabel2.setText("danh sách: " + room.getUser().size());
         //Setup chat
         String chat = "";
         for (String j : room.getChatHistory()) {
@@ -68,10 +71,26 @@ public class ChatScreen extends javax.swing.JFrame {
         public void run() {
             while (true) {
                 try {
-                    String a = client.testGetMess();
-                    String chatText = jTextPane1.getText();
-                    System.out.println("From chatscreen");
-                    jTextPane1.setText(chatText + a + "\n");
+                    Message m = client.ReadMessLoop();
+                    String header = m.getHeader();
+                    switch (header) {
+                        case "ROOMMESS": {
+                            String a = (String) m.getContent();
+                            String chatText = jTextPane1.getText();
+                            jTextPane1.setText(chatText + a + "\n");
+                            break;
+                        }
+                        case "CLIENTJOINROOM": {
+                            String a = (String) m.getContent();
+                            String chatText = jTextPane1.getText();
+                            dlm.addElement(a);
+                            jTextPane1.setText(chatText +a+ " đã vào phòng" + "\n");                            
+                            break;
+                        }
+                        default: {
+                            break;
+                        }
+                    }
                 } catch (IOException ex) {
                     Logger.getLogger(ChatScreen.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (ClassNotFoundException ex) {
@@ -98,6 +117,7 @@ public class ChatScreen extends javax.swing.JFrame {
         jLabel1 = new javax.swing.JLabel();
         jScrollPane3 = new javax.swing.JScrollPane();
         jList2 = new javax.swing.JList();
+        jLabel2 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -134,43 +154,48 @@ public class ChatScreen extends javax.swing.JFrame {
 
         jScrollPane3.setViewportView(jList2);
 
+        jLabel2.setText("jLabel2");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 105, Short.MAX_VALUE)
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 105, Short.MAX_VALUE)
-                        .addGap(18, 18, 18)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(jTextField1, javax.swing.GroupLayout.DEFAULT_SIZE, 398, Short.MAX_VALUE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jButton1))
-                            .addComponent(jScrollPane1)))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addComponent(jTextField1, javax.swing.GroupLayout.DEFAULT_SIZE, 398, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jButton1))
+                    .addComponent(jScrollPane1))
                 .addContainerGap())
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGap(31, 31, 31)
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(186, 186, 186))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(16, 16, 16)
-                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(7, 7, 7)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jScrollPane3)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 275, Short.MAX_VALUE))
                 .addGap(25, 25, 25)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addGap(0, 2, Short.MAX_VALUE)
                         .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(jTextField1))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(13, Short.MAX_VALUE))
         );
 
         pack();
@@ -187,21 +212,23 @@ public class ChatScreen extends javax.swing.JFrame {
     private void jButton1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButton1MouseClicked
         // TODO add your handling code here:
         //get text 
-        String clientChat = this.jTextField1.getText();
-        String ChatPanel = this.jTextPane1.getText();
-        ChatPanel = ChatPanel + "bạn: " + clientChat + "\n";
-        this.jTextPane1.setText(ChatPanel);
-        try {
-            this.client.sendMessToRoom(clientChat, this.client.getUsername(), this.room.getName());
-        } catch (IOException ex) {
-            Logger.getLogger(ChatScreen.class.getName()).log(Level.SEVERE, null, ex);
+        if (this.jTextField1.getText() != null) {
+            String clientChat = this.jTextField1.getText();
+            String ChatPanel = this.jTextPane1.getText();
+            ChatPanel = ChatPanel + "bạn: " + clientChat + "\n";
+            this.jTextPane1.setText(ChatPanel);
+            try {
+                this.client.sendMessToRoom(clientChat, this.client.getUsername(), this.room.getName());
+            } catch (IOException ex) {
+                Logger.getLogger(ChatScreen.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            this.jTextField1.setText("");
         }
-        this.jTextField1.setText("");
     }//GEN-LAST:event_jButton1MouseClicked
 
     private void jTextField1KeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jTextField1KeyPressed
         // TODO add your handling code here:
-        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER && this.jTextField1.getText() != null) {
             //get text 
             String clientChat = this.jTextField1.getText();
             String ChatPanel = this.jTextPane1.getText();
@@ -214,7 +241,7 @@ public class ChatScreen extends javax.swing.JFrame {
             }
             jTextField1.setText("");
         }
-        
+
     }//GEN-LAST:event_jTextField1KeyPressed
 
     /**
@@ -256,6 +283,7 @@ public class ChatScreen extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JList jList2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane3;
