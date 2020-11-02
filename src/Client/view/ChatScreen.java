@@ -84,6 +84,7 @@ public class ChatScreen extends javax.swing.JFrame {
                             String a = (String) m.getContent();
                             String chatText = jTextPane1.getText();
                             dlm.addElement(a);
+                            jLabel2.setText("danh sách: "+dlm.size());
                             jTextPane1.setText(chatText +a+ " đã vào phòng" + "\n");                            
                             break;
                         }
