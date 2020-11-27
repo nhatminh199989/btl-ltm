@@ -6,6 +6,7 @@
 package Client.view;
 
 import Client.controller.Client;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
@@ -24,12 +25,13 @@ public class Login extends javax.swing.JFrame {
      * Creates new form Login
      */
     private Client client;
+
     public Login() throws IOException {
         initComponents();
         client = new Client();
-        if(client.connect() == true){
+        if (client.connect() == true) {
             System.out.println("Connection ok ");
-        }else{
+        } else {
             System.out.println("Connection NOT ok");
         }
     }
@@ -66,6 +68,11 @@ public class Login extends javax.swing.JFrame {
         jPasswordField1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jPasswordField1ActionPerformed(evt);
+            }
+        });
+        jPasswordField1.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                jPasswordField1KeyPressed(evt);
             }
         });
 
@@ -129,9 +136,8 @@ public class Login extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
-
     private void jPasswordField1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jPasswordField1ActionPerformed
-        // TODO add your handling code here:
+
     }//GEN-LAST:event_jPasswordField1ActionPerformed
 
     private void jTextField2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jTextField2ActionPerformed
@@ -142,14 +148,14 @@ public class Login extends javax.swing.JFrame {
         try {
             System.out.println("click click");
             String username = jTextField2.getText().trim();
-            String password = jPasswordField1.getText().trim();            
+            String password = jPasswordField1.getText().trim();
             if (client.login(username, password) == true) {
                 this.setVisible(false);
                 System.out.println("dang nhap thanh cong");
-                RoomPicker roompicker = new RoomPicker(this, rootPaneCheckingEnabled,this.client);
+                RoomPicker roompicker = new RoomPicker(this, rootPaneCheckingEnabled, this.client);
                 roompicker.setVisible(true);
             } else {
-                 JOptionPane.showMessageDialog(this, "Tài khoản hoặc mật khẩu không chính xác");
+                JOptionPane.showMessageDialog(this, "Tài khoản hoặc mật khẩu không chính xác");
             }
         } catch (IOException ex) {
             Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
@@ -160,8 +166,33 @@ public class Login extends javax.swing.JFrame {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // TODO add your handling code here:
-        
+
     }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jPasswordField1KeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_jPasswordField1KeyPressed
+        // TODO add your handling code here:
+        if (evt.getKeyCode() == KeyEvent.VK_ENTER) {
+            if (this.jPasswordField1.getText() != null && this.jTextField2.getText() != null) {
+                try {
+                    System.out.println("click click");
+                    String username = jTextField2.getText().trim();
+                    String password = jPasswordField1.getText().trim();
+                    if (client.login(username, password) == true) {
+                        this.setVisible(false);
+                        System.out.println("dang nhap thanh cong");
+                        RoomPicker roompicker = new RoomPicker(this, rootPaneCheckingEnabled, this.client);
+                        roompicker.setVisible(true);
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Tài khoản hoặc mật khẩu không chính xác");
+                    }
+                } catch (IOException ex) {
+                    Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (ClassNotFoundException ex) {
+                    Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+    }//GEN-LAST:event_jPasswordField1KeyPressed
 
     /**
      * @param args the command line arguments

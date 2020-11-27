@@ -64,14 +64,15 @@ public class RoomPicker extends javax.swing.JDialog {
     }
 
     public void onJoinRoom(RoomClientSide r) throws IOException, ClassNotFoundException {
-        ChatScreen sc = new ChatScreen(r,client);
+        ChatScreen sc = new ChatScreen(r,client,this);
         sc.setVisible(true);
         this.setVisible(false);
     }
 
-    private RoomPicker(JFrame jFrame, boolean b) {
+    private RoomPicker() {
 
     }
+    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -166,7 +167,7 @@ public class RoomPicker extends javax.swing.JDialog {
         /* Create and display the dialog */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                RoomPicker dialog = new RoomPicker(new javax.swing.JFrame(), true);
+                RoomPicker dialog = new RoomPicker();
                 dialog.addWindowListener(new java.awt.event.WindowAdapter() {
                     @Override
                     public void windowClosing(java.awt.event.WindowEvent e) {

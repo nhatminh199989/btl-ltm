@@ -12,12 +12,26 @@ import Client.model.RoomClientSide;
 import com.sun.xml.internal.ws.api.streaming.XMLStreamReaderFactory;
 import java.awt.PopupMenu;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.DataLine;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.SourceDataLine;
+import javax.sound.sampled.TargetDataLine;
 import javax.swing.DefaultListModel;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JList;
 
 /**
@@ -33,9 +47,19 @@ public class ChatScreen extends javax.swing.JFrame {
     private Client client;
     private DefaultListModel dlm = new DefaultListModel();
     ReadDataThread rdt = new ReadDataThread();
-
-    public ChatScreen(RoomClientSide room, Client client) throws IOException, ClassNotFoundException {
+    private JDialog roomPickerDialog;
+    private boolean is_recording = false;
+    private boolean is_playing = false;
+    public static ByteArrayOutputStream out;
+    public static record r ;
+    public static playSound ps;
+    
+    
+    public ChatScreen(RoomClientSide room, Client client, JDialog dialog) throws IOException, ClassNotFoundException {
         initComponents();
+        this.jButton2.setText("►");
+        this.jButton3.setText("►");
+        this.roomPickerDialog = dialog;
         this.jTextPane1.setEditable(false);
         this.room = room;
         this.client = client;
@@ -59,10 +83,23 @@ public class ChatScreen extends javax.swing.JFrame {
         }
         jTextPane1.setText(chat);
         rdt.start();
+        this.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent event) {
+                previousDialog();
+            }
+        });
+    }
+
+    private void previousDialog() {
+        this.setVisible(false);
+        this.roomPickerDialog.setVisible(true);
+        this.dispose();
+        System.exit(0);
     }
 
     private ChatScreen() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     class ReadDataThread extends Thread {
@@ -84,8 +121,8 @@ public class ChatScreen extends javax.swing.JFrame {
                             String a = (String) m.getContent();
                             String chatText = jTextPane1.getText();
                             dlm.addElement(a);
-                            jLabel2.setText("danh sách: "+dlm.size());
-                            jTextPane1.setText(chatText +a+ " đã vào phòng" + "\n");                            
+                            jLabel2.setText("danh sách: " + dlm.size());
+                            jTextPane1.setText(chatText + a + " đã vào phòng" + "\n");
                             break;
                         }
                         default: {
@@ -98,6 +135,69 @@ public class ChatScreen extends javax.swing.JFrame {
                     Logger.getLogger(ChatScreen.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
+            }
+        }
+    }
+    
+    class playSound extends Thread{
+        AudioFormat format = new AudioFormat(8000.0f, 16, 1, true, true);
+        AudioInputStream audioInputStream;
+        SourceDataLine sourceDataLine;
+        byte audioData[] = out.toByteArray();
+        public void run() {
+            try {                
+                InputStream byteArrayInputStream = new ByteArrayInputStream(audioData);
+                audioInputStream = new AudioInputStream(byteArrayInputStream, format, audioData.length / format.getFrameSize());
+                DataLine.Info dataLineInfo = new DataLine.Info(SourceDataLine.class, format);
+                sourceDataLine = (SourceDataLine) AudioSystem.getLine(dataLineInfo);
+                sourceDataLine.open(format);
+                sourceDataLine.start();
+                int cnt = 0;
+                byte tempBuffer[] = new byte[10000];
+                while ((cnt = audioInputStream.read(tempBuffer, 0, tempBuffer.length)) != -1) {
+                    if (cnt > 0) {
+                        sourceDataLine.write(tempBuffer, 0, cnt);
+                    }
+                }
+                sourceDataLine.drain();
+                sourceDataLine.close();
+                jLabel4.setText("SPEAKER");
+                jButton3.setText("►");
+            } catch (LineUnavailableException ex) {
+                System.out.println(ex);
+            } catch (IOException ex) {
+                System.out.println(ex);
+            }
+        }
+    }
+    
+
+    class record extends Thread {
+        public void run() {
+            AudioFormat format = new AudioFormat(8000.0f, 16, 1, true, true);
+            TargetDataLine microphone;
+            try {
+                out = new ByteArrayOutputStream();
+                System.out.println("Recording");
+                microphone = AudioSystem.getTargetDataLine(format);
+                DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
+                microphone = (TargetDataLine) AudioSystem.getLine(info);
+                microphone.open(format);
+                int numBytesRead;
+                int CHUNK_SIZE = 1024;
+                byte[] data = new byte[microphone.getBufferSize() / 5];
+                microphone.start();
+                int bytesRead = 0;
+                while (is_recording == true) {
+                    numBytesRead = microphone.read(data, 0, CHUNK_SIZE);
+                    bytesRead = bytesRead + numBytesRead;
+                    System.out.println(bytesRead);
+                    out.write(data, 0, numBytesRead);
+                }
+                microphone.close();
+                System.out.println("closed");
+            } catch (LineUnavailableException ex) {
+                System.out.println(ex);
             }
         }
     }
@@ -119,6 +219,10 @@ public class ChatScreen extends javax.swing.JFrame {
         jScrollPane3 = new javax.swing.JScrollPane();
         jList2 = new javax.swing.JList();
         jLabel2 = new javax.swing.JLabel();
+        jButton2 = new javax.swing.JButton();
+        jButton3 = new javax.swing.JButton();
+        jLabel3 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -157,14 +261,46 @@ public class ChatScreen extends javax.swing.JFrame {
 
         jLabel2.setText("jLabel2");
 
+        jButton2.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        jButton2.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jButton2MouseClicked(evt);
+            }
+        });
+
+        jButton3.setFont(new java.awt.Font("Tahoma", 1, 12)); // NOI18N
+        jButton3.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jButton3MouseClicked(evt);
+            }
+        });
+        jButton3.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton3ActionPerformed(evt);
+            }
+        });
+
+        jLabel3.setText("MIC");
+
+        jLabel4.setText("SPEAKER");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 105, Short.MAX_VALUE)
-                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel3)
+                            .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jLabel4, javax.swing.GroupLayout.DEFAULT_SIZE, 56, Short.MAX_VALUE)
+                            .addComponent(jButton3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                .addGap(29, 29, 29)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jTextField1, javax.swing.GroupLayout.DEFAULT_SIZE, 398, Short.MAX_VALUE)
@@ -175,7 +311,7 @@ public class ChatScreen extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(31, 31, 31)
                 .addComponent(jLabel2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 279, Short.MAX_VALUE)
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(186, 186, 186))
         );
@@ -190,13 +326,21 @@ public class ChatScreen extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jScrollPane3)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 275, Short.MAX_VALUE))
-                .addGap(25, 25, 25)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(0, 2, Short.MAX_VALUE)
-                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jTextField1))
-                .addContainerGap(13, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 25, Short.MAX_VALUE)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jTextField1)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(26, 26, 26)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jButton3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jButton2, javax.swing.GroupLayout.DEFAULT_SIZE, 32, Short.MAX_VALUE))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel3)
+                    .addComponent(jLabel4)))
         );
 
         pack();
@@ -242,8 +386,47 @@ public class ChatScreen extends javax.swing.JFrame {
             }
             jTextField1.setText("");
         }
-
     }//GEN-LAST:event_jTextField1KeyPressed
+
+    private void jButton2MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButton2MouseClicked
+        if (is_recording == false) {
+            is_recording = true;
+            this.jButton2.setText("||");
+            this.jLabel3.setText("Recording");
+            r = new record();
+            r.start();
+            
+        } else {
+            is_recording = false;
+            this.jButton2.setText("►");
+            this.jLabel3.setText("MIC");
+            is_recording = false;
+            r = null;
+            //send to room
+            
+        }
+    }//GEN-LAST:event_jButton2MouseClicked
+
+
+    private void jButton3MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButton3MouseClicked
+        // TODO add your handling code here:
+        if (is_playing == false) {
+            is_playing = true;
+            this.jButton3.setText("||");
+            this.jLabel4.setText("Playing");
+            ps = new playSound();
+            ps.start();
+        } else {
+            is_playing = false;
+            this.jButton3.setText("►");
+            this.jLabel4.setText("SPEAKER");
+            ps.stop();
+        }
+    }//GEN-LAST:event_jButton3MouseClicked
+
+    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jButton3ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -283,8 +466,12 @@ public class ChatScreen extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton jButton1;
+    private javax.swing.JButton jButton2;
+    private javax.swing.JButton jButton3;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JList jList2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane3;
