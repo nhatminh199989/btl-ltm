@@ -14,6 +14,10 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
 import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -29,7 +33,10 @@ public class Client {
 
     private String username;
     private final String serverName = "localhost";
-    private final int serverPort = 8188;
+    private final int serverPort = 10000;
+    private MulticastSocket ms;
+    private InetAddress group;  
+    
     private Socket socket;
     private ObjectOutputStream serverOut;
     private ObjectInputStream serverIn;
@@ -88,6 +95,10 @@ public class Client {
         System.out.println("Joinning room");
         Message res = (Message) serverIn.readObject();
         RoomClientSide r = (RoomClientSide) res.getContent();
+        ms = new MulticastSocket(4321);
+        String udpIP = r.getName().trim().split(" - ")[1].trim();
+        group = InetAddress.getByName(udpIP);
+        ms.joinGroup(group);
         return r;
     }
     
@@ -107,7 +118,17 @@ public class Client {
         String message  = m.getFrom()+":"+(String) m.getContent();
         System.out.println("From client testGetMess");
         return message;
-        
+    }
+    
+    public void sendVoice(byte[] buffer) throws IOException{
+        DatagramPacket dgp = new DatagramPacket(buffer,buffer.length, group,4321);
+        ms.send(dgp);
     }
         
+    public byte[] receiveVoice() throws IOException{
+        byte[] buffer = new byte[49152];
+        DatagramPacket dgp = new DatagramPacket(buffer,buffer.length);
+        ms.receive(dgp);
+        return dgp.getData();
+    }
 }

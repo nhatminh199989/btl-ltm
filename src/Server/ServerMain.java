@@ -18,7 +18,7 @@ import java.net.Socket;
 
 public class ServerMain {        
     public static void main(String[] args) throws IOException {
-        ServerSocket ss = new ServerSocket(8188);
+        ServerSocket ss = new ServerSocket(10000);
         ServerData sd = new ServerData();
         while(true){
             Socket socket = ss.accept();

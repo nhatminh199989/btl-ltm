@@ -18,6 +18,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.DatagramPacket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -51,10 +52,11 @@ public class ChatScreen extends javax.swing.JFrame {
     private boolean is_recording = false;
     private boolean is_playing = false;
     public static ByteArrayOutputStream out;
-    public static record r ;
+    public static record r;
     public static playSound ps;
-    
-    
+    public byte[] audioData;
+    ReadVoice rv = new ReadVoice();
+
     public ChatScreen(RoomClientSide room, Client client, JDialog dialog) throws IOException, ClassNotFoundException {
         initComponents();
         this.jButton2.setText("►");
@@ -63,7 +65,8 @@ public class ChatScreen extends javax.swing.JFrame {
         this.jTextPane1.setEditable(false);
         this.room = room;
         this.client = client;
-        this.jLabel1.setText(room.getName().toUpperCase());
+        String udpIP = room.getName().trim().split(" - ")[1].trim();
+        this.jLabel1.setText(udpIP);
 
         //Setup user list
         jList2.setModel(dlm);
@@ -83,6 +86,7 @@ public class ChatScreen extends javax.swing.JFrame {
         }
         jTextPane1.setText(chat);
         rdt.start();
+        rv.start();
         this.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent event) {
@@ -100,6 +104,19 @@ public class ChatScreen extends javax.swing.JFrame {
 
     private ChatScreen() {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    class ReadVoice extends Thread {
+
+        public void run() {
+            while (true) {
+                try {
+                    audioData = client.receiveVoice();
+                } catch (IOException ex) {
+                    Logger.getLogger(ChatScreen.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
     }
 
     class ReadDataThread extends Thread {
@@ -138,14 +155,15 @@ public class ChatScreen extends javax.swing.JFrame {
             }
         }
     }
-    
-    class playSound extends Thread{
+
+    class playSound extends Thread {
+
         AudioFormat format = new AudioFormat(8000.0f, 16, 1, true, true);
         AudioInputStream audioInputStream;
         SourceDataLine sourceDataLine;
-        byte audioData[] = out.toByteArray();
+
         public void run() {
-            try {                
+            try {
                 InputStream byteArrayInputStream = new ByteArrayInputStream(audioData);
                 audioInputStream = new AudioInputStream(byteArrayInputStream, format, audioData.length / format.getFrameSize());
                 DataLine.Info dataLineInfo = new DataLine.Info(SourceDataLine.class, format);
@@ -163,6 +181,7 @@ public class ChatScreen extends javax.swing.JFrame {
                 sourceDataLine.close();
                 jLabel4.setText("SPEAKER");
                 jButton3.setText("►");
+                is_playing = false;
             } catch (LineUnavailableException ex) {
                 System.out.println(ex);
             } catch (IOException ex) {
@@ -170,9 +189,9 @@ public class ChatScreen extends javax.swing.JFrame {
             }
         }
     }
-    
 
     class record extends Thread {
+
         public void run() {
             AudioFormat format = new AudioFormat(8000.0f, 16, 1, true, true);
             TargetDataLine microphone;
@@ -188,13 +207,22 @@ public class ChatScreen extends javax.swing.JFrame {
                 byte[] data = new byte[microphone.getBufferSize() / 5];
                 microphone.start();
                 int bytesRead = 0;
-                while (is_recording == true) {
+                while (is_recording == true && bytesRead <= 49152) {
                     numBytesRead = microphone.read(data, 0, CHUNK_SIZE);
                     bytesRead = bytesRead + numBytesRead;
                     System.out.println(bytesRead);
                     out.write(data, 0, numBytesRead);
                 }
                 microphone.close();
+                is_recording = false;
+                jButton2.setText("►");
+                jLabel3.setText("MIC");
+                r = null;
+                try {
+                    client.sendVoice(out.toByteArray());
+                } catch (IOException ex) {
+                    Logger.getLogger(ChatScreen.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 System.out.println("closed");
             } catch (LineUnavailableException ex) {
                 System.out.println(ex);
@@ -395,15 +423,17 @@ public class ChatScreen extends javax.swing.JFrame {
             this.jLabel3.setText("Recording");
             r = new record();
             r.start();
-            
+
         } else {
             is_recording = false;
             this.jButton2.setText("►");
             this.jLabel3.setText("MIC");
-            is_recording = false;
             r = null;
-            //send to room
-            
+            try {
+                client.sendVoice(out.toByteArray());
+            } catch (IOException ex) {
+                Logger.getLogger(ChatScreen.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
     }//GEN-LAST:event_jButton2MouseClicked
 

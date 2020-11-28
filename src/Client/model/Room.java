@@ -18,7 +18,8 @@ public class Room implements Serializable {
     private String name;
     private List<String> ChatHistory;
     private List<String> User;
-    private ArrayList<Server> ServerList; 
+    private ArrayList<Server> ServerList;
+    
     public Room(String name, List<String> ChatHistory, List<String> User) {
         this.name = name;
         this.ChatHistory = ChatHistory;

@@ -16,9 +16,9 @@ public class ServerData {
     private ArrayList<Room> list = new ArrayList<Room>();
     
     public ServerData() {        
-        Room phong1 = new Room("Phòng 1");
-        Room phong2 = new Room("Phòng 2");
-        Room phong3 = new Room("Phòng 3");
+        Room phong1 = new Room("Phòng 1 - 230.0.0.0");
+        Room phong2 = new Room("Phòng 2 - 230.0.0.1");
+        Room phong3 = new Room("Phòng 3 - 230.0.0.2");
         this.list.add(phong1);
         this.list.add(phong2);
         this.list.add(phong3);
