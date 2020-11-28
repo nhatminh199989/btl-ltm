@@ -85,9 +85,23 @@ public class Server extends Thread{
                         sendMessToRoom(message);
                         break;
                     }
+                    case "LEAVEROOM" :{
+                        System.out.println("Leaving room");
+                        leaveRoom(message);
+                        break;
+                    }
+                    default: break;
                 }
             }
         }
+    }
+    
+    public void leaveRoom(Message message) throws IOException{
+        String RoomName = message.getTo();
+        Room room = sd.getRoomByName(RoomName);
+        String from = message.getFrom();
+        room.sendLeave(from);
+        //System.out.println(from+"is leaving room "+room.getName());
     }
     
     public void sendMessToRoom(Message message) throws IOException{

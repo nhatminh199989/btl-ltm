@@ -90,11 +90,17 @@ public class ChatScreen extends javax.swing.JFrame {
         this.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent event) {
-                previousDialog();
+                try {
+                    client.sendLeaveMess("",client.getUsername(),room.getName());
+                } catch (IOException ex) {
+                    Logger.getLogger(ChatScreen.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                previousDialog();                
             }
         });
     }
 
+    
     private void previousDialog() {
         this.setVisible(false);
         this.roomPickerDialog.setVisible(true);
@@ -141,6 +147,16 @@ public class ChatScreen extends javax.swing.JFrame {
                             jLabel2.setText("danh sách: " + dlm.size());
                             jTextPane1.setText(chatText + a + " đã vào phòng" + "\n");
                             break;
+                        }
+                        case "LEAVE":{
+                            String user = (String) m.getFrom();
+                            for(int i = 0; i< dlm.getSize();i++){
+                                if(dlm.get(i).equals(user)){
+                                    dlm.remove(i);
+                                }
+                            }  
+                            jTextPane1.setText(user + " đã rời phòng" + "\n");
+                            jLabel2.setText("danh sách: " + dlm.size());
                         }
                         default: {
                             break;

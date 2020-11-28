@@ -10,30 +10,32 @@ import java.util.ArrayList;
 import java.util.List;
 import Server.controller.Server;
 import java.io.IOException;
+
 /**
  *
  * @author Watermelon
  */
 public class Room implements Serializable {
+
     private String name;
     private List<String> ChatHistory;
     private List<String> User;
     private ArrayList<Server> ServerList;
-    
+
     public Room(String name, List<String> ChatHistory, List<String> User) {
         this.name = name;
         this.ChatHistory = ChatHistory;
         this.User = User;
     }
 
-    public RoomClientSide ClientsideRoom(){
-        return new RoomClientSide(name,ChatHistory, User);
+    public RoomClientSide ClientsideRoom() {
+        return new RoomClientSide(name, ChatHistory, User);
     }
-    
-    public void addServer(Server s){
+
+    public void addServer(Server s) {
         this.ServerList.add(s);
     }
-        
+
     public Room(String name) {
         this.name = name;
         this.User = new ArrayList<>();
@@ -80,23 +82,42 @@ public class Room implements Serializable {
         return "Room{" + "name=" + name + ", ChatHistory=" + ChatHistory + ", User=" + User + '}';
     }
 
-    public void sendMessage(String from,String msg) throws IOException{
-        String message = from+": "+msg;
+    public void sendMessage(String from, String msg) throws IOException {
+        String message = from + ": " + msg;
         this.ChatHistory.add(message);
-        for(Server i : ServerList){
-            if(!i.getAcc().getUsername().equals(from)){
-                Message m = new Message("ROOMMESS",message,from,name);
+        for (Server i : ServerList) {
+            if (!i.getAcc().getUsername().equals(from)) {
+                Message m = new Message("ROOMMESS", message, from, name);
                 i.sendMessage(m);
             }
         }
     }
-    
-    public void ClientJoinRoom(String username) throws IOException{
-        for(Server i : ServerList){
-           if(!i.getAcc().getUsername().equals(username)){
-               Message m = new Message ("CLIENTJOINROOM",username,"","");
-               i.sendMessage(m);
-           }
+
+    public void sendLeave(String from) throws IOException {
+        User.remove(from);
+        Server LeaveServer = null;
+        for (Server i : ServerList) {
+            if (i.getAcc().getUsername().equals(from)) {
+                LeaveServer = i;
+            }
+        }
+        ServerList.remove(LeaveServer);
+        for (Server i : ServerList) {
+            if (!i.getAcc().getUsername().equals(from)) {
+                Message m = new Message("LEAVE", "", from, name);
+                i.sendMessage(m);
+                System.out.println(from + " is leaving " + name);
+            }
+
+        }
+    }    
+
+    public void ClientJoinRoom(String username) throws IOException {
+        for (Server i : ServerList) {
+            if (!i.getAcc().getUsername().equals(username)) {
+                Message m = new Message("CLIENTJOINROOM", username, "", "");
+                i.sendMessage(m);
+            }
         }
     }
 

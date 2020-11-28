@@ -108,6 +108,12 @@ public class Client {
         serverOut.flush();
     }   
     
+    public void sendLeaveMess(String mess,String from,String to) throws IOException{
+        Message msg = new Message("LEAVEROOM",mess,from,to);
+        serverOut.writeObject(msg);
+        serverOut.flush();
+    }
+    
     public Message ReadMessLoop() throws IOException, ClassNotFoundException{
         Message m = (Message) serverIn.readObject();
         return m;
