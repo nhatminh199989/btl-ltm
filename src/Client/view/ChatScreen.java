@@ -130,7 +130,7 @@ public class ChatScreen extends javax.swing.JFrame {
                 try {
                     audioData = client.receiveVoice();
                     inputMess("Bạn nhận được một voice chat", Color.red);
-                    //System.out.println("Đã nhận được voice");
+                    System.out.println("Đã nhận được voice");
                 } catch (IOException ex) {
                     Logger.getLogger(ChatScreen.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (BadLocationException ex) {

@@ -105,7 +105,7 @@ public class Client {
         System.out.println("Joinning room");
         Message res = (Message) serverIn.readObject();
         RoomClientSide r = (RoomClientSide) res.getContent();
-        ms = new MulticastSocket(13000);
+        ms = new MulticastSocket(12000);
         String udpIP = r.getName().trim().split("-")[1].trim();
         group = InetAddress.getByName(udpIP);
         ms.joinGroup(group);
@@ -138,15 +138,14 @@ public class Client {
     
     public void sendVoice(byte[] buffer) throws IOException{
         DatagramPacket dgp = new DatagramPacket(buffer,buffer.length, group,12000);
-        ms.send(dgp);
+        MulticastSocket ms2 = new MulticastSocket();
+        ms2.send(dgp);
     }
         
     public byte[] receiveVoice() throws IOException{
         byte[] buffer = new byte[49152];
         DatagramPacket dgp = new DatagramPacket(buffer,buffer.length);
         ms.receive(dgp);
-        return dgp.getData();
-        
-        
+        return dgp.getData();       
     }
 }
