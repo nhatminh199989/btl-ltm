@@ -31,14 +31,14 @@ import java.util.logging.Logger;
  *
  * @author Watermelon
  */
-public class Server extends Thread{
+public class Server extends Thread {
 
     private final Socket clientSocket;
     private ObjectInputStream inputStream;
     private ObjectOutputStream outputStream;
     private ServerData sd;
     private Account acc;
-    
+
     public Server(ServerData sd, Socket clientSocket) throws IOException {
         this.sd = sd;
         this.clientSocket = clientSocket;
@@ -54,10 +54,12 @@ public class Server extends Thread{
             Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
         } catch (ClassNotFoundException ex) {
             Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SQLException ex) {
+            Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
-    public void handlerClientSocket() throws IOException, ClassNotFoundException {
+    public void handlerClientSocket() throws IOException, ClassNotFoundException, SQLException {
         Message message;
         System.out.println("Start server");
         while (true) {
@@ -80,38 +82,57 @@ public class Server extends Thread{
                         joinRoom(message);
                         break;
                     }
-                    case "ROOMMESS":{
+                    case "ROOMMESS": {
                         System.out.println("Sending mess to room");
                         sendMessToRoom(message);
                         break;
                     }
-                    case "LEAVEROOM" :{
+                    case "LEAVEROOM": {
                         System.out.println("Leaving room");
                         leaveRoom(message);
                         break;
                     }
-                    default: break;
+                    case "REGISTER": {
+                        System.out.println("Register");
+                        register(message);
+                        break;
+                    }
+                    default:
+                        break;
                 }
             }
         }
     }
-    
-    public void leaveRoom(Message message) throws IOException{
+
+    public void leaveRoom(Message message) throws IOException {
         String RoomName = message.getTo();
         Room room = sd.getRoomByName(RoomName);
         String from = message.getFrom();
         room.sendLeave(from);
         //System.out.println(from+"is leaving room "+room.getName());
     }
-    
-    public void sendMessToRoom(Message message) throws IOException{
+
+    public void register(Message message) throws ClassNotFoundException, SQLException, IOException {
+        String username = (String) message.getContent();
+        String password = (String) message.getFrom();
+        Class.forName("com.mysql.jdbc.Driver");
+        Connection con = DriverManager.getConnection("jdbc:mysql://localhost:3306/baitaplon", "root", "");
+        String sql = "INSERT INTO taikhoan(username,pwd) VALUES(?,?) ";
+        PreparedStatement prepStmt = con.prepareStatement(sql);
+        prepStmt.setString(1, username);
+        prepStmt.setString(2, password);
+        int check = prepStmt.executeUpdate();
+        Message res = new Message("RES_Register",check,"","");
+        sendMessage(res);
+    }
+
+    public void sendMessToRoom(Message message) throws IOException {
         String RoomName = message.getTo();
-        String chat = message.getFrom()+":"+(String) message.getContent();
+        String chat = message.getFrom() + ":" + (String) message.getContent();
         Room room = sd.getRoomByName(RoomName);
         System.out.println(chat);
-        room.sendMessage(message.getFrom(),(String) message.getContent());
+        room.sendMessage(message.getFrom(), (String) message.getContent());
     }
-    
 
     public void joinRoom(Message message) throws IOException {
         String RoomName = message.getTo();
@@ -133,24 +154,23 @@ public class Server extends Thread{
 
     public void getRoomList() throws IOException {
         ArrayList<Room> roomList = this.sd.getList();
-        ArrayList<RoomClientSide> roomClientSideList= new ArrayList<RoomClientSide>();
-        for(Room i : roomList){
-            roomClientSideList.add(new RoomClientSide(i.getName(),i.getChatHistory(),i.getUser()));
+        ArrayList<RoomClientSide> roomClientSideList = new ArrayList<RoomClientSide>();
+        for (Room i : roomList) {
+            roomClientSideList.add(new RoomClientSide(i.getName(), i.getChatHistory(), i.getUser()));
         }
         Message res = new Message("ROOMLIST", roomClientSideList, "", "");
         outputStream.writeObject(res);
     }
-    
-    public Account getAcc(){
+
+    public Account getAcc() {
         return this.acc;
     }
-    
-    
-    public void sendMessage(Message message) throws IOException{
+
+    public void sendMessage(Message message) throws IOException {
         outputStream.writeObject(message);
         outputStream.flush();
     }
-    
+
     public void login(Message message) throws IOException {
         try {
             String username = (String) message.getContent();

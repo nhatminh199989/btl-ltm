@@ -10,6 +10,7 @@ import Client.model.Message;
 import Client.model.Room;
 import Client.model.RoomClientSide;
 import com.sun.xml.internal.ws.api.streaming.XMLStreamReaderFactory;
+import java.awt.Color;
 import java.awt.PopupMenu;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
@@ -34,6 +35,10 @@ import javax.swing.DefaultListModel;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
 
 /**
  *
@@ -112,15 +117,25 @@ public class ChatScreen extends javax.swing.JFrame {
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
+    private void inputMess(String msg,Color color) throws BadLocationException{
+        SimpleAttributeSet sas = new SimpleAttributeSet(jTextPane1.getCharacterAttributes());
+        StyleConstants.setForeground(sas, color);
+        jTextPane1.getDocument().insertString(jTextPane1.getDocument().getLength(), msg, sas);
+    }
+    
     class ReadVoice extends Thread {
 
         public void run() {
             while (true) {
                 try {
                     audioData = client.receiveVoice();
+                    inputMess("Bạn nhận được một voice chat", Color.red);
+                    //System.out.println("Đã nhận được voice");
                 } catch (IOException ex) {
                     Logger.getLogger(ChatScreen.class.getName()).log(Level.SEVERE, null, ex);
-                }
+                } catch (BadLocationException ex) {
+                    Logger.getLogger(ChatScreen.class.getName()).log(Level.SEVERE, null, ex);
+                } 
             }
         }
     }
@@ -136,16 +151,15 @@ public class ChatScreen extends javax.swing.JFrame {
                     switch (header) {
                         case "ROOMMESS": {
                             String a = (String) m.getContent();
-                            String chatText = jTextPane1.getText();
-                            jTextPane1.setText(chatText + a + "\n");
+                            inputMess(a +"\n", Color.black);
                             break;
                         }
                         case "CLIENTJOINROOM": {
                             String a = (String) m.getContent();
                             String chatText = jTextPane1.getText();
                             dlm.addElement(a);
-                            jLabel2.setText("danh sách: " + dlm.size());
-                            jTextPane1.setText(chatText + a + " đã vào phòng" + "\n");
+                            jLabel2.setText("danh sách: " + dlm.size());                            
+                            inputMess(a+" đã vào phòng \n", Color.red);
                             break;
                         }
                         case "LEAVE":{
@@ -155,7 +169,8 @@ public class ChatScreen extends javax.swing.JFrame {
                                     dlm.remove(i);
                                 }
                             }  
-                            jTextPane1.setText(user + " đã rời phòng" + "\n");
+                            String leaveRoom = user+ " đã rời khỏi phòng \n";
+                            inputMess(leaveRoom, Color.red);
                             jLabel2.setText("danh sách: " + dlm.size());
                         }
                         default: {
@@ -165,6 +180,8 @@ public class ChatScreen extends javax.swing.JFrame {
                 } catch (IOException ex) {
                     Logger.getLogger(ChatScreen.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (ClassNotFoundException ex) {
+                    Logger.getLogger(ChatScreen.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (BadLocationException ex) {
                     Logger.getLogger(ChatScreen.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
@@ -405,7 +422,7 @@ public class ChatScreen extends javax.swing.JFrame {
             String clientChat = this.jTextField1.getText();
             String ChatPanel = this.jTextPane1.getText();
             ChatPanel = ChatPanel + "bạn: " + clientChat + "\n";
-            this.jTextPane1.setText(ChatPanel);
+            this.jTextPane1.setText(ChatPanel); 
             try {
                 this.client.sendMessToRoom(clientChat, this.client.getUsername(), this.room.getName());
             } catch (IOException ex) {

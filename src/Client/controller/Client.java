@@ -78,6 +78,16 @@ public class Client {
             return false;
         }
     }
+    
+    public boolean register(String username,String password) throws IOException, ClassNotFoundException{
+        Message msg = new Message("REGISTER",username,password,"");
+        serverOut.writeObject(msg);        
+        Message res = (Message) serverIn.readObject();
+        if( (int)res.getContent() == 1 ){
+            return true;
+        }
+        return false;
+    }
 
     public ArrayList<RoomClientSide> getRoom() throws IOException, ClassNotFoundException {
         Message msg = new Message("GETROOM", "", "", "");
@@ -95,8 +105,8 @@ public class Client {
         System.out.println("Joinning room");
         Message res = (Message) serverIn.readObject();
         RoomClientSide r = (RoomClientSide) res.getContent();
-        ms = new MulticastSocket(4321);
-        String udpIP = r.getName().trim().split(" - ")[1].trim();
+        ms = new MulticastSocket(13000);
+        String udpIP = r.getName().trim().split("-")[1].trim();
         group = InetAddress.getByName(udpIP);
         ms.joinGroup(group);
         return r;
@@ -127,7 +137,7 @@ public class Client {
     }
     
     public void sendVoice(byte[] buffer) throws IOException{
-        DatagramPacket dgp = new DatagramPacket(buffer,buffer.length, group,4321);
+        DatagramPacket dgp = new DatagramPacket(buffer,buffer.length, group,12000);
         ms.send(dgp);
     }
         
@@ -136,5 +146,7 @@ public class Client {
         DatagramPacket dgp = new DatagramPacket(buffer,buffer.length);
         ms.receive(dgp);
         return dgp.getData();
+        
+        
     }
 }
