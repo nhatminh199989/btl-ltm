@@ -37,6 +37,7 @@ import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
@@ -49,6 +50,7 @@ public class ChatScreen extends javax.swing.JFrame {
     /**
      * Creates new form ChatScreen
      */
+    
     private RoomClientSide room;
     private Client client;
     private DefaultListModel dlm = new DefaultListModel();
@@ -61,7 +63,8 @@ public class ChatScreen extends javax.swing.JFrame {
     public static playSound ps;
     public byte[] audioData;
     ReadVoice rv = new ReadVoice();
-
+    public int on = 1;
+    
     public ChatScreen(RoomClientSide room, Client client, JDialog dialog) throws IOException, ClassNotFoundException {
         initComponents();
         this.jButton2.setText("►");
@@ -124,13 +127,14 @@ public class ChatScreen extends javax.swing.JFrame {
     }
     
     class ReadVoice extends Thread {
-
         public void run() {
             while (true) {
                 try {
-                    audioData = client.receiveVoice();
-                    inputMess("Bạn nhận được một voice chat", Color.red);
-                    System.out.println("Đã nhận được voice");
+                    audioData = client.receiveVoice();                    
+                    on++;
+                    if(on % 2 == 1 ){
+                        inputMess("Bạn nhận được một voice chat \n", Color.red);
+                    }
                 } catch (IOException ex) {
                     Logger.getLogger(ChatScreen.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (BadLocationException ex) {
